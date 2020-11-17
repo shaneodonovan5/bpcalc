@@ -1,0 +1,52 @@
+# ASP.NET Core (.NET Framework)
+# Build and test ASP.NET Core projects targeting the full .NET Framework.
+# Add steps that publish symbols, save build artifacts, and more:
+# https://docs.microsoft.com/azure/devops/pipelines/languages/dotnet-core
+
+# ASP.Core
+# Build and test ASP.NET Core projects targeting .NET Core.
+# Add steps that run tests, create a NuGet package, deploy, and more:
+# https://docs.microsoft.com/azure/devops/pipelines/languages/dotnet-core
+
+trigger:
+- master
+
+pool:
+  vmImage: 'windows-2019'
+
+variables:
+  buildConfiguration: 'Release'
+
+steps:
+- script: dotnet build --configuration $(buildConfiguration)
+  displayName: 'dotnet build $(buildConfiguration)'
+
+- task: DotNetCoreCLI@2
+  inputs:
+    command: 'test'
+    projects: '**/*Test*/*.csproj'
+    arguments: '--configuration $(buildConfiguration)'
+    testRunTitle: 'run tests'
+
+
+- task: DotNetCoreCLI@2
+  displayName: 'dotnet publish web project'
+  inputs:
+    command: publish
+    publishWebProjects: true
+    zipAfterPublish: true
+    arguments: '--configuration $(BuildConfiguration) --output $(build.artifactstagingdirectory)'  
+    
+- task: PublishBuildArtifacts@1
+  displayName: 'Publish Artifact: drop'
+  inputs:
+    PathtoPublish: '$(build.artifactstagingdirectory)'
+
+    
+#- task: AzureRmWebAppDeployment@4
+#  inputs:
+#    ConnectionType: 'AzureRM'
+#    azureSubscription: 'Azure for Students Starter (ee9361b0-5954-476c-a2d8-a8d8334ecf58)'
+#    appType: 'webApp'
+#    WebAppName: 'gc-bmicalculator'
+#    packageForLinux: '$(build.artifactstagingdirectory)/**/*.zip'
